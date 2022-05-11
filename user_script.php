@@ -56,20 +56,44 @@ function checkFile($size, $type) {
     }
 }
 
+function validateInput($data) {
+    $data = trim($data);
+    $data = htmlspecialchars($data);
+    $data = stripslashes($data);
+    return $data;
+}
+
+function selectQuery($table, ...$columns) {
+    $column = implode(", ", $columns);
+    if ($column) {
+        return "SELECT $column FROM $table";
+    } else {
+        return "SELECT * FROM $table";
+    }
+}
+
+function insertQuery($table, ...$columns) {
+    $column = implode(", ", $columns);
+    if ($column) {
+        return "INSERT INTO $table ($column)";
+    } else {
+        return "INSERT INTO $table";
+    }
+}
+
 $message = "";
 
 if (isset($_POST['submit-button'])) {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $phone_num = $_POST['phone_num'];
-    $gender = $_POST['gender'];
-    $pass = $_POST['pass'];
-    $cpass = $_POST['c_pass'];
-    $f_name = $_FILES['file']['name'];
-    $f_size = $_FILES['file']['size'];
-    $type = strtolower(pathinfo($f_name,PATHINFO_EXTENSION));
-    
-    $temp_name = $_FILES['file']['tmp_name'];
+    $name = validateInput($_POST['name']);
+    $email = validateInput($_POST['email']);
+    $phone_num = validateInput($_POST['phone_num']);
+    $gender = validateInput($_POST['gender']);
+    $pass = validateInput($_POST['pass']);
+    $cpass = validateInput($_POST['c_pass']);
+    $f_name = validateInput($_FILES['file']['name']);
+    $f_size = validateInput($_FILES['file']['size']);
+    $type = validateInput(strtolower(pathinfo($f_name,PATHINFO_EXTENSION)));
+    $temp_name = validateInput($_FILES['file']['tmp_name']);
     $path = "upload/".$f_name;
     
     $name_error = fieldRequired($name);
@@ -95,15 +119,15 @@ if (isset($_POST['submit-button'])) {
     || $check_pass
     || $check_file)) {
 
-        $email_exist = $connection->prepare("SELECT * FROM user_detail WHERE email = ?");
+        $email_exist = $conn->prepare(selectQuery('user_detail').' WHERE email = ?');
         $email_exist->bind_param('s', $email);
         $email_exist->execute();
         $email_exist->store_result();
         if ($email_exist->num_rows > 0) {
             $message = "Email already exist";
         } else {
-            $query = $connection->prepare("INSERT INTO user_detail (name, email, phone_number, gender, password, profile_image) VALUES (?, ?, ?, ?, ?, ?)");
-            $query->bind_param('ssssss', $name, $email, $phone_num, $gender, $pass, $f_name);
+            $query = $conn->prepare(insertQuery('user_detail', 'name', 'email', 'phone_number', 'gender', 'password', 'profile_image')." VALUES (?, ?, ?, ?, ?, ?)");
+            $query->bind_param('ssssss', $name, $email, $phone_num, $gender, md5($pass), $f_name);
 
             if ($query->execute()) {
                 $moved = move_uploaded_file($temp_name, $path);
@@ -111,11 +135,12 @@ if (isset($_POST['submit-button'])) {
                     $message = "failed ".$_FILES['file']['error'];
                 }
                 $message = "User detail inserted";
+                header('Location: view_user_detail.php');
             } else {
                 $message = "User detail not inserted";
             }
         }
     }
 }
-$connection->close();
+$conn->close();
 ?>

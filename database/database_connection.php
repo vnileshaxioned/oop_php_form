@@ -5,10 +5,15 @@ $username = "phpmyadmin";
 $password = "root";
 $database_name = "user";
 
-$connection = new mysqli($servername, $username, $password, $database_name);
+try{
+    $conn = new mysqli($servername, $username, $password, $database_name);
 
-if($connection->connect_error) {
-    die ('Database connection failed ' . $connection->connect_error);
+    if($conn->connect_error) {
+        throw new Exception(die ('Database connection failed ' . $conn->connect_error));
+    }
+} catch (Exception $e) {
+    echo $e->getMessage();
 }
+
 
 ?>

@@ -33,6 +33,7 @@ require_once('database/database_connection.php');
         <table>
             <thead>
                 <tr>
+                    <th>Id</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone Number</th>
@@ -43,12 +44,14 @@ require_once('database/database_connection.php');
             <tbody>
                 <?php
                     $query = "SELECT * FROM user_detail";
-                    $user_detail = $connection->query($query);
+                    $user_detail = $conn->query($query);
 
                     if ($user_detail->num_rows > 0) {
+                        $id = 1;
                         foreach ($user_detail as $detail) {
                 ?>
                     <tr>
+                        <td><?php echo $id++; ?></td>
                         <td><?php echo $detail['name']; ?></td>
                         <td><?php echo $detail['email']; ?></td>
                         <td><?php echo $detail['phone_number']; ?></td>
@@ -59,8 +62,8 @@ require_once('database/database_connection.php');
                             ?>
                                 <img src="upload/<?php echo $detail['profile_image']; ?>" alt="<?php echo $detail['profile_image']; ?>">
                             <?php } else {
-                                echo "No image";
-                            }    
+                                    echo "No image";
+                                }
                             ?>
                         </td>
                     <?php
