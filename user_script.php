@@ -73,8 +73,8 @@ function selectQuery($table, ...$columns) {
 }
 
 function insertQuery($table, ...$columns) {
-    $column = implode(", ", $columns);
-    if ($column) {
+    if ($columns) {
+        $column = implode(", ", $columns);
         return "INSERT INTO $table ($column)";
     } else {
         return "INSERT INTO $table";
@@ -83,7 +83,7 @@ function insertQuery($table, ...$columns) {
 
 $message = "";
 
-if (isset($_POST['submit-button'])) {
+if (isset($_POST['submit'])) {
     $name = validateInput($_POST['name']);
     $email = validateInput($_POST['email']);
     $phone_num = validateInput($_POST['phone_num']);
@@ -107,7 +107,8 @@ if (isset($_POST['submit-button'])) {
     $cpass_error = fieldRequired($cpass);
     $check_pass = checkPass($pass, $cpass);
     $check_file = checkFile($f_size, $type);
-    
+    $password_encrypt = md5($pass);
+
     if (!($name_error
     || $email_error
     || $email_check
@@ -119,28 +120,30 @@ if (isset($_POST['submit-button'])) {
     || $check_pass
     || $check_file)) {
 
-        $email_exist = $conn->prepare(selectQuery('user_detail').' WHERE email = ?');
-        $email_exist->bind_param('s', $email);
-        $email_exist->execute();
-        $email_exist->store_result();
-        if ($email_exist->num_rows > 0) {
-            $message = "Email already exist";
-        } else {
-            $query = $conn->prepare(insertQuery('user_detail', 'name', 'email', 'phone_number', 'gender', 'password', 'profile_image')." VALUES (?, ?, ?, ?, ?, ?)");
-            $query->bind_param('ssssss', $name, $email, $phone_num, $gender, md5($pass), $f_name);
+        try {
+            $email_exist = $conn->prepare(selectQuery('users').' WHERE email = ?');
+            $email_exist->bind_param('s', $email);
+            $email_exist->execute();
+            $email_exist = $email_exist->get_result()->fetch_assoc();
 
-            if ($query->execute()) {
-                $moved = move_uploaded_file($temp_name, $path);
-                if (!$moved) {
-                    $message = "failed ".$_FILES['file']['error'];
-                }
-                $message = "User detail inserted";
-                header('Location: view_user_detail.php');
+            if ($email_exist > 0) {
+                throw new Exception ("Email already exist");
             } else {
-                $message = "User detail not inserted";
+                $values = array($name, $email, $phone_num, $gender, $password_encrypt, $f_name);
+                $query = $conn->prepare(insertQuery('users', 'name', 'email', 'phone_number', 'gender', 'password', 'profile_image')." VALUES (?, ?, ?, ?, ?, ?)");
+                $query->bind_param('ssssss', ...$values);
+
+                if ($query->execute()) {
+                    $moved = move_uploaded_file($temp_name, $path);
+                    header('Location: view_user_detail.php');
+                } else {
+                    throw new Exception ("User detail not inserted");
+                }
             }
+        } catch (Exception $e) {
+            $message = $e->getMessage();
         }
     }
+    $conn->close();
 }
-$conn->close();
 ?>

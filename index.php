@@ -69,7 +69,7 @@ require_once('user_script.php');
                     <span> <?php echo $check_file; ?></span>
                 </div>
                 <div class="form-group">
-                    <input type="submit" name="submit-button" value="Submit">
+                    <input type="submit" name="submit" value="Submit">
                 </div>
             </form>
             <a href="view_user_detail.php">Show inserted user data</a>

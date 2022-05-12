@@ -1,5 +1,5 @@
 <?php
-require_once('database/database_connection.php');
+require_once('user_script.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,6 +29,7 @@ require_once('database/database_connection.php');
 <body>
     <div class="container">
         <h3>User Details</h3>
+        <h3><?php echo $message; ?></h3>
         <a href="index.php">Back to form</a>
         <table>
             <thead>
@@ -43,12 +44,11 @@ require_once('database/database_connection.php');
             </thead>
             <tbody>
                 <?php
-                    $query = "SELECT * FROM user_detail";
+                    $query = selectQuery('users');
                     $user_detail = $conn->query($query);
-
-                    if ($user_detail->num_rows > 0) {
+                    if ($user_detail > 0) {
                         $id = 1;
-                        foreach ($user_detail as $detail) {
+                        while ($detail = $user_detail->fetch_assoc()) {
                 ?>
                     <tr>
                         <td><?php echo $id++; ?></td>
@@ -70,9 +70,9 @@ require_once('database/database_connection.php');
                             }
                         } else {
                     ?>
-                        <td colspan="5">No user data found</td>
+                        <td colspan="6">No user data found</td>
                     </tr>
-                <?php } ?>
+                <?php } $conn->close(); ?>
             </tbody>
         </table>
     </div>
